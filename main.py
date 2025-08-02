@@ -1,4 +1,6 @@
 import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # Page setup
 st.set_page_config(page_title="Strengths & Culture Fit", layout="centered")
@@ -21,8 +23,17 @@ answer = st.radio("Choose one:",
         "Keep going—results take time anyway"
     ])
 
+# Function to write to Google Sheet
+def append_to_gsheet(name, user_code, answer):
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("Hiring Responses").sheet1
+    sheet.append_row([name, user_code, answer])
+
 # Step 3: Show result
 if st.button("Submit"):
+    append_to_gsheet(name, user_code, answer)
     st.success(f"Thanks, {name}! Your response is saved under code {user_code}.")
     st.write("✅ Your answer helps us understand how your mindset fits a role and our culture.")
-
